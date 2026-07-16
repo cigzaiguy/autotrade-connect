@@ -68,9 +68,10 @@ export const createListing = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((raw: unknown) => CreateListingInput.parse(raw))
   .handler(async ({ data, context }) => {
+    const listing_code = `L-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
     const { data: row, error } = await context.supabase
       .from("listings")
-      .insert({ ...data, owner_id: context.userId })
+      .insert({ ...data, listing_code, owner_id: context.userId })
       .select("id, listing_code")
       .single();
     if (error) throw new Error(error.message);
