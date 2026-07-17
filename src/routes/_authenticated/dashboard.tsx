@@ -59,10 +59,13 @@ function Dashboard() {
               <div className="size-5 rounded-sm bg-primary shadow-glow" />
               <span className="text-lg font-bold tracking-tighter">AUTOINTEL</span>
             </Link>
-            <span className="hidden font-mono text-[10px] uppercase tracking-widest text-muted-foreground md:inline">
-              · Deal Room
-            </span>
+            <nav className="hidden items-center gap-3 font-mono text-[10px] uppercase tracking-widest md:flex">
+              <span className="text-primary">Deal Room</span>
+              <Link to="/intel" className="text-muted-foreground hover:text-foreground">Intel</Link>
+              <Link to="/admin" className="text-muted-foreground hover:text-foreground">Admin</Link>
+            </nav>
           </div>
+
           <div className="flex items-center gap-3">
             <span className="font-mono text-xs text-primary">{handle}</span>
             <button
