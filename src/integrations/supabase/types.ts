@@ -14,6 +14,151 @@ export type Database = {
   }
   public: {
     Tables: {
+      deals: {
+        Row: {
+          agreed_price: number | null
+          buyer_id: string
+          closed_at: string | null
+          commission_amount: number | null
+          commission_pct: number
+          created_at: string
+          currency: string | null
+          id: string
+          listing_id: string
+          notes: string | null
+          seller_id: string
+          status: Database["public"]["Enums"]["deal_status"]
+          updated_at: string
+        }
+        Insert: {
+          agreed_price?: number | null
+          buyer_id: string
+          closed_at?: string | null
+          commission_amount?: number | null
+          commission_pct?: number
+          created_at?: string
+          currency?: string | null
+          id?: string
+          listing_id: string
+          notes?: string | null
+          seller_id: string
+          status?: Database["public"]["Enums"]["deal_status"]
+          updated_at?: string
+        }
+        Update: {
+          agreed_price?: number | null
+          buyer_id?: string
+          closed_at?: string | null
+          commission_amount?: number | null
+          commission_pct?: number
+          created_at?: string
+          currency?: string | null
+          id?: string
+          listing_id?: string
+          notes?: string | null
+          seller_id?: string
+          status?: Database["public"]["Enums"]["deal_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deals_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      intel_items: {
+        Row: {
+          ai_summary: string | null
+          created_at: string
+          fetched_at: string
+          headline: string
+          id: string
+          impact: string | null
+          item_url: string | null
+          published_at: string | null
+          raw: Json | null
+          source_id: string | null
+          source_name: string
+          source_url: string
+          tag: Database["public"]["Enums"]["intel_tag"]
+        }
+        Insert: {
+          ai_summary?: string | null
+          created_at?: string
+          fetched_at?: string
+          headline: string
+          id?: string
+          impact?: string | null
+          item_url?: string | null
+          published_at?: string | null
+          raw?: Json | null
+          source_id?: string | null
+          source_name: string
+          source_url: string
+          tag: Database["public"]["Enums"]["intel_tag"]
+        }
+        Update: {
+          ai_summary?: string | null
+          created_at?: string
+          fetched_at?: string
+          headline?: string
+          id?: string
+          impact?: string | null
+          item_url?: string | null
+          published_at?: string | null
+          raw?: Json | null
+          source_id?: string | null
+          source_name?: string
+          source_url?: string
+          tag?: Database["public"]["Enums"]["intel_tag"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "intel_items_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "intel_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      intel_sources: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          id: string
+          last_run_at: string | null
+          last_status: string | null
+          name: string
+          tag: Database["public"]["Enums"]["intel_tag"]
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          last_run_at?: string | null
+          last_status?: string | null
+          name: string
+          tag: Database["public"]["Enums"]["intel_tag"]
+          url: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          last_run_at?: string | null
+          last_status?: string | null
+          name?: string
+          tag?: Database["public"]["Enums"]["intel_tag"]
+          url?: string
+        }
+        Relationships: []
+      }
       interests: {
         Row: {
           bid_price: number | null
@@ -145,6 +290,39 @@ export type Database = {
         }
         Relationships: []
       }
+      trader_billing: {
+        Row: {
+          created_at: string
+          fee_due_at: string | null
+          last_paid_at: string | null
+          notes: string | null
+          suspended: boolean
+          updated_at: string
+          user_id: string
+          yearly_fee_status: Database["public"]["Enums"]["fee_status"]
+        }
+        Insert: {
+          created_at?: string
+          fee_due_at?: string | null
+          last_paid_at?: string | null
+          notes?: string | null
+          suspended?: boolean
+          updated_at?: string
+          user_id: string
+          yearly_fee_status?: Database["public"]["Enums"]["fee_status"]
+        }
+        Update: {
+          created_at?: string
+          fee_due_at?: string | null
+          last_paid_at?: string | null
+          notes?: string | null
+          suspended?: boolean
+          updated_at?: string
+          user_id?: string
+          yearly_fee_status?: Database["public"]["Enums"]["fee_status"]
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -181,6 +359,9 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "trader"
+      deal_status: "open" | "closed" | "cancelled"
+      fee_status: "paid" | "due" | "overdue" | "trial"
+      intel_tag: "news" | "oem" | "freight" | "oil" | "chips"
       interest_status: "submitted" | "reviewing" | "matched" | "declined"
       listing_category:
         | "vehicles"
@@ -317,6 +498,9 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "trader"],
+      deal_status: ["open", "closed", "cancelled"],
+      fee_status: ["paid", "due", "overdue", "trial"],
+      intel_tag: ["news", "oem", "freight", "oil", "chips"],
       interest_status: ["submitted", "reviewing", "matched", "declined"],
       listing_category: [
         "vehicles",
