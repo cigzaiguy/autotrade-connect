@@ -243,7 +243,12 @@ function TradersTab() {
   const [search, setSearch] = useState("");
 
   const set = useMutation({
-    mutationFn: (v: Parameters<typeof billFn>[0]["data"]) => billFn({ data: v }),
+    mutationFn: (v: {
+      user_id: string;
+      yearly_fee_status?: "paid" | "due" | "overdue" | "trial";
+      suspended?: boolean;
+    }) => billFn({ data: v }),
+
     onSuccess: () => {
       toast.success("Updated");
       qc.invalidateQueries({ queryKey: ["admin-traders"] });
@@ -339,7 +344,13 @@ function DealsTab() {
   const q = useQuery({ queryKey: ["admin-deals"], queryFn: () => fn() });
 
   const upd = useMutation({
-    mutationFn: (v: Parameters<typeof updFn>[0]["data"]) => updFn({ data: v }),
+    mutationFn: (v: {
+      deal_id: string;
+      commission_pct?: number;
+      agreed_price?: number;
+      status?: "open" | "closed" | "cancelled";
+    }) => updFn({ data: v }),
+
     onSuccess: () => {
       toast.success("Updated");
       qc.invalidateQueries({ queryKey: ["admin-deals"] });
