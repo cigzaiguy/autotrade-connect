@@ -91,7 +91,7 @@ function QueueTab() {
   const q = useQuery({ queryKey: ["admin-queue"], queryFn: () => fn() });
 
   const setStatus = useMutation({
-    mutationFn: (v: { interest_id: string; status: "shortlisted" | "rejected" | "submitted" }) =>
+    mutationFn: (v: { interest_id: string; status: "reviewing" | "declined" | "submitted" }) =>
       statusFn({ data: v }),
     onSuccess: () => {
       toast.success("Updated");
@@ -177,7 +177,7 @@ function QueueTab() {
                     <div className="flex flex-wrap gap-1">
                       <button
                         onClick={() =>
-                          setStatus.mutate({ interest_id: i.id, status: "shortlisted" })
+                          setStatus.mutate({ interest_id: i.id, status: "reviewing" })
                         }
                         className="rounded bg-surface-strong px-2 py-1 text-[10px] font-mono uppercase tracking-widest hover:bg-primary/20"
                       >
@@ -185,7 +185,7 @@ function QueueTab() {
                       </button>
                       <button
                         onClick={() =>
-                          setStatus.mutate({ interest_id: i.id, status: "rejected" })
+                          setStatus.mutate({ interest_id: i.id, status: "declined" })
                         }
                         className="rounded bg-surface-strong px-2 py-1 text-[10px] font-mono uppercase tracking-widest hover:bg-destructive/20"
                       >
