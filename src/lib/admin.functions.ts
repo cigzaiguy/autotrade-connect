@@ -18,25 +18,18 @@ export const listBrokerQueue = createServerFn({ method: "GET" })
     const ids = (listings ?? []).map((l) => l.id);
     const ownerIds = Array.from(new Set((listings ?? []).map((l) => l.owner_id)));
 
-    const [{ data: interests }, { data: profiles }] = await Promise.all([
-      context.supabase
-        .from("interests")
-        .select("id, listing_id, trader_id, bid_price, quantity_wanted, message, status, created_at")
-        .in("listing_id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"]),
-      context.supabase
-        .from("profiles")
-        .select("id, handle, company_name, contact_email, country")
-        .in(
-          "id",
-          Array.from(
-            new Set([...(ownerIds ?? []), ...((interests ?? []).map((i) => i.trader_id))]),
-          ).length
-            ? Array.from(
-                new Set([...(ownerIds ?? []), ...((interests ?? []).map((i) => i.trader_id))]),
-              )
-            : ["00000000-0000-0000-0000-000000000000"],
-        ),
-    ]);
+    const { data: interests } = await context.supabase
+      .from("interests")
+      .select("id, listing_id, trader_id, bid_price, quantity_wanted, message, status, created_at")
+      .in("listing_id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"]);
+
+    const profileIds = Array.from(
+      new Set([...ownerIds, ...(interests ?? []).map((i) => i.trader_id)]),
+    );
+    const { data: profiles } = await context.supabase
+      .from("profiles")
+      .select("id, handle, company_name, contact_email, country")
+      .in("id", profileIds.length ? profileIds : ["00000000-0000-0000-0000-000000000000"]);
 
     const pmap = new Map((profiles ?? []).map((p) => [p.id, p]));
     return (listings ?? []).map((l) => ({
@@ -48,16 +41,18 @@ export const listBrokerQueue = createServerFn({ method: "GET" })
     }));
   });
 
+
 export const updateInterestStatus = createServerFn({ method: "POST" })
   .middleware([requireAdmin])
   .inputValidator((raw: unknown) =>
     z
       .object({
         interest_id: z.string().uuid(),
-        status: z.enum(["submitted", "shortlisted", "rejected", "matched"]),
+        status: z.enum(["submitted", "reviewing", "declined", "matched"]),
       })
       .parse(raw),
   )
+
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase
       .from("interests")
