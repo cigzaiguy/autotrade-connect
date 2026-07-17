@@ -108,7 +108,7 @@ export const matchDeal = createServerFn({ method: "POST" })
     await context.supabase.from("interests").update({ status: "matched" }).eq("id", interest.id);
     await context.supabase
       .from("listings")
-      .update({ status: "brokered" })
+      .update({ status: "brokering" })
       .eq("id", interest.listing_id);
     return { ok: true, deal_id: deal.id };
   });
@@ -237,8 +237,17 @@ export const updateDeal = createServerFn({ method: "POST" })
       .parse(raw),
   )
   .handler(async ({ data, context }) => {
-    const { deal_id, status, ...rest } = data;
-    const patch: Record<string, unknown> = { ...rest };
+    const { deal_id, status, commission_pct, agreed_price, notes } = data;
+    const patch: {
+      status?: "open" | "closed" | "cancelled";
+      closed_at?: string;
+      commission_pct?: number;
+      agreed_price?: number;
+      notes?: string | null;
+    } = {};
+    if (commission_pct !== undefined) patch.commission_pct = commission_pct;
+    if (agreed_price !== undefined) patch.agreed_price = agreed_price;
+    if (notes !== undefined) patch.notes = notes;
     if (status) {
       patch.status = status;
       if (status === "closed") patch.closed_at = new Date().toISOString();
@@ -247,6 +256,7 @@ export const updateDeal = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
 
 export const adminSummary = createServerFn({ method: "GET" })
   .middleware([requireAdmin])
