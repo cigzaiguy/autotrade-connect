@@ -5,8 +5,9 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * AutoIntel — Refinitiv Ivory terminal.
- * Warm ivory paper, deep navy ink, oxblood accents. Executive density.
+ * AutoIntel — dual terminal themes.
+ * :root = Refinitiv Ivory (warm paper, navy ink, oxblood accents).
+ * .dark = Bloomberg Classic (black canvas, amber primary, phosphor greens/reds).
  */
 
 @theme inline {
@@ -40,7 +41,6 @@
   --color-ring: var(--ring);
   --color-ring-offset-background: var(--background);
 
-  /* AutoIntel domain tokens */
   --color-surface: var(--surface);
   --color-surface-strong: var(--surface-strong);
   --color-cyan: var(--primary);
@@ -50,7 +50,6 @@
   --color-signal-warn: var(--signal-warn);
   --color-hairline: var(--hairline);
 
-  /* Kept token name for backward compat; now a crisp paper shadow */
   --shadow-glow: 0 1px 0 0 oklch(0.22 0.05 265 / 0.18);
   --shadow-paper: 0 1px 0 0 oklch(0.22 0.05 265 / 0.16), 0 2px 6px -3px oklch(0.22 0.05 265 / 0.14);
 }
@@ -58,11 +57,11 @@
 :root {
   --radius: 0.25rem;
 
-  /* Refinitiv Ivory — warm paper, deep navy ink */
-  --background: oklch(0.955 0.018 85);        /* #F5F1E8 warm ivory */
-  --foreground: oklch(0.22 0.05 265);         /* #0F1B3D deep navy */
-  --surface: oklch(0.935 0.022 82);           /* #EEE8D8 card paper */
-  --surface-strong: oklch(0.905 0.025 80);    /* #E8E2D3 raised */
+  /* Refinitiv Ivory */
+  --background: oklch(0.955 0.018 85);
+  --foreground: oklch(0.22 0.05 265);
+  --surface: oklch(0.935 0.022 82);
+  --surface-strong: oklch(0.905 0.025 80);
   --hairline: oklch(0.22 0.05 265 / 0.14);
 
   --card: oklch(0.935 0.022 82);
@@ -70,7 +69,7 @@
   --popover: oklch(0.955 0.018 85);
   --popover-foreground: oklch(0.22 0.05 265);
 
-  --primary: oklch(0.22 0.05 265);            /* navy */
+  --primary: oklch(0.22 0.05 265);
   --primary-foreground: oklch(0.955 0.018 85);
 
   --secondary: oklch(0.905 0.025 80);
@@ -78,47 +77,63 @@
   --muted: oklch(0.905 0.025 80);
   --muted-foreground: oklch(0.22 0.05 265 / 0.62);
 
-  --accent: oklch(0.42 0.16 28);              /* oxblood */
+  --accent: oklch(0.42 0.16 28);
   --accent-foreground: oklch(0.955 0.018 85);
 
-  --destructive: oklch(0.42 0.16 28);         /* oxblood */
+  --destructive: oklch(0.42 0.16 28);
   --destructive-foreground: oklch(0.955 0.018 85);
 
-  --signal-up: oklch(0.42 0.11 155);          /* forest green #0F5132 */
-  --signal-down: oklch(0.42 0.16 28);         /* oxblood */
-  --signal-warn: oklch(0.55 0.13 80);         /* dark amber */
+  --signal-up: oklch(0.42 0.11 155);
+  --signal-down: oklch(0.42 0.16 28);
+  --signal-warn: oklch(0.55 0.13 80);
 
   --border: oklch(0.22 0.05 265 / 0.14);
   --input: oklch(0.905 0.025 80);
   --ring: oklch(0.22 0.05 265 / 0.5);
 }
 
-/* Dark class no longer used; keep tokens equal to :root for safety. */
+/* Bloomberg Classic — black canvas, amber primary */
 .dark {
-  --background: oklch(0.955 0.018 85);
-  --foreground: oklch(0.22 0.05 265);
-  --card: oklch(0.935 0.022 82);
-  --card-foreground: oklch(0.22 0.05 265);
-  --popover: oklch(0.955 0.018 85);
-  --popover-foreground: oklch(0.22 0.05 265);
-  --primary: oklch(0.22 0.05 265);
-  --primary-foreground: oklch(0.955 0.018 85);
-  --secondary: oklch(0.905 0.025 80);
-  --secondary-foreground: oklch(0.22 0.05 265);
-  --muted: oklch(0.905 0.025 80);
-  --muted-foreground: oklch(0.22 0.05 265 / 0.62);
-  --accent: oklch(0.42 0.16 28);
-  --accent-foreground: oklch(0.955 0.018 85);
-  --destructive: oklch(0.42 0.16 28);
-  --destructive-foreground: oklch(0.955 0.018 85);
-  --border: oklch(0.22 0.05 265 / 0.14);
-  --input: oklch(0.905 0.025 80);
-  --ring: oklch(0.22 0.05 265 / 0.5);
+  --background: oklch(0.13 0.005 80);          /* near-black #0B0B0A */
+  --foreground: oklch(0.94 0.02 85);           /* warm bone */
+  --surface: oklch(0.18 0.008 80);             /* raised panel */
+  --surface-strong: oklch(0.23 0.01 80);       /* strong raised */
+  --hairline: oklch(0.78 0.15 70 / 0.22);      /* amber hairline */
+
+  --card: oklch(0.18 0.008 80);
+  --card-foreground: oklch(0.94 0.02 85);
+  --popover: oklch(0.15 0.006 80);
+  --popover-foreground: oklch(0.94 0.02 85);
+
+  --primary: oklch(0.78 0.16 70);              /* Bloomberg amber #FF9F1C */
+  --primary-foreground: oklch(0.13 0.005 80);
+
+  --secondary: oklch(0.23 0.01 80);
+  --secondary-foreground: oklch(0.94 0.02 85);
+  --muted: oklch(0.23 0.01 80);
+  --muted-foreground: oklch(0.94 0.02 85 / 0.6);
+
+  --accent: oklch(0.78 0.16 70);
+  --accent-foreground: oklch(0.13 0.005 80);
+
+  --destructive: oklch(0.62 0.22 25);
+  --destructive-foreground: oklch(0.98 0.01 85);
+
+  --signal-up: oklch(0.78 0.20 145);           /* phosphor green */
+  --signal-down: oklch(0.66 0.24 25);          /* terminal red */
+  --signal-warn: oklch(0.85 0.17 90);          /* bright amber */
+
+  --border: oklch(0.78 0.15 70 / 0.22);
+  --input: oklch(0.23 0.01 80);
+  --ring: oklch(0.78 0.16 70 / 0.55);
 }
 
 @layer base {
   html {
     color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
   }
 
   * {
@@ -136,7 +151,7 @@
   }
 
   ::selection {
-    background-color: color-mix(in oklab, var(--color-primary) 20%, transparent);
+    background-color: color-mix(in oklab, var(--color-primary) 30%, transparent);
     color: var(--color-foreground);
   }
 
@@ -147,7 +162,6 @@
   }
 }
 
-/* Paper hairline (kept as scanline utility name for backward compat, now inert) */
 @utility scanline {
   background-image: none;
 }
@@ -163,4 +177,93 @@
 
 @utility animate-marquee {
   animation: marquee-left 60s linear infinite;
+}
+
+/* ============ Data tables ============ */
+@utility data-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-foreground);
+}
+.data-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--color-surface-strong);
+  color: var(--color-muted-foreground);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 10px;
+  text-align: left;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--color-hairline);
+  white-space: nowrap;
+}
+.data-table tbody td {
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--color-hairline);
+  white-space: nowrap;
+}
+.data-table tbody tr:hover td {
+  background: color-mix(in oklab, var(--color-primary) 6%, transparent);
+}
+.data-table td.num,
+.data-table th.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.data-table td.up { color: var(--color-signal-up); }
+.data-table td.down { color: var(--color-signal-down); }
+.data-table td.warn { color: var(--color-signal-warn); }
+
+@utility ticker-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  border: 1px solid var(--color-hairline);
+  background: var(--color-surface);
+}
+
+/* ============ Charts ============ */
+@utility chart-frame {
+  position: relative;
+  background: var(--color-surface);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-md);
+  padding: 12px;
+}
+@utility chart-grid {
+  background-image:
+    linear-gradient(to right, var(--color-hairline) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--color-hairline) 1px, transparent 1px);
+  background-size: 40px 32px;
+}
+.chart-axis {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  fill: var(--color-muted-foreground);
+  color: var(--color-muted-foreground);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.chart-line-up { stroke: var(--color-signal-up); }
+.chart-line-down { stroke: var(--color-signal-down); }
+.chart-line-primary { stroke: var(--color-primary); }
+.chart-area-primary { fill: color-mix(in oklab, var(--color-primary) 22%, transparent); }
+.chart-area-up { fill: color-mix(in oklab, var(--color-signal-up) 20%, transparent); }
+.chart-area-down { fill: color-mix(in oklab, var(--color-signal-down) 20%, transparent); }
+
+@utility spark {
+  display: inline-block;
+  vertical-align: middle;
+  width: 96px;
+  height: 24px;
 }
