@@ -9,6 +9,8 @@ import {
   submitInterest,
   myLedger,
 } from "@/lib/dealroom.functions";
+import { traderStats } from "@/lib/stats.functions";
+import { AreaChart, BarChart, ChartHeader, KPI } from "@/components/charts";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -85,6 +87,8 @@ function Dashboard() {
         {/* Signal ticker */}
         <Ticker />
       </header>
+
+      <StatsStrip />
 
       <div className="mx-auto grid max-w-[1400px] gap-6 px-6 py-6 lg:grid-cols-[1fr_320px]">
         {/* Deal Room */}
