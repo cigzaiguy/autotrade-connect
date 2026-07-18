@@ -14,10 +14,13 @@ import {
   adminSummary,
 } from "@/lib/admin.functions";
 import { listIntelSources, toggleIntelSource, runIntelRefresh } from "@/lib/intel.functions";
+import { listApplications, reviewApplication } from "@/lib/applications.functions";
+import { platformStats } from "@/lib/stats.functions";
+import { AreaChart, BarChart, ChartHeader, Funnel, KPI } from "@/components/charts";
 
 export const Route = createFileRoute("/_authenticated/admin")({ component: AdminPage });
 
-type Tab = "queue" | "traders" | "deals" | "intel";
+type Tab = "queue" | "apps" | "traders" | "deals" | "analytics" | "intel";
 
 function AdminPage() {
   const [tab, setTab] = useState<Tab>("queue");
@@ -47,7 +50,7 @@ function AdminPage() {
               </span>
             </Link>
             <nav className="flex gap-2 text-xs font-mono uppercase tracking-widest">
-              {(["queue", "traders", "deals", "intel"] as Tab[]).map((t) => (
+              {(["queue", "apps", "traders", "deals", "analytics", "intel"] as Tab[]).map((t) => (
                 <button
                   key={t}
                   onClick={() => setTab(t)}
@@ -75,8 +78,10 @@ function AdminPage() {
 
       <main className="p-6">
         {tab === "queue" && <QueueTab />}
+        {tab === "apps" && <ApplicationsTab />}
         {tab === "traders" && <TradersTab />}
         {tab === "deals" && <DealsTab />}
+        {tab === "analytics" && <AnalyticsTab />}
         {tab === "intel" && <IntelTab />}
       </main>
     </div>
