@@ -14,10 +14,13 @@ import {
   adminSummary,
 } from "@/lib/admin.functions";
 import { listIntelSources, toggleIntelSource, runIntelRefresh } from "@/lib/intel.functions";
+import { listApplications, reviewApplication } from "@/lib/applications.functions";
+import { platformStats } from "@/lib/stats.functions";
+import { AreaChart, BarChart, ChartHeader, Funnel, KPI } from "@/components/charts";
 
 export const Route = createFileRoute("/_authenticated/admin")({ component: AdminPage });
 
-type Tab = "queue" | "traders" | "deals" | "intel";
+type Tab = "queue" | "apps" | "traders" | "deals" | "analytics" | "intel";
 
 function AdminPage() {
   const [tab, setTab] = useState<Tab>("queue");
@@ -47,7 +50,7 @@ function AdminPage() {
               </span>
             </Link>
             <nav className="flex gap-2 text-xs font-mono uppercase tracking-widest">
-              {(["queue", "traders", "deals", "intel"] as Tab[]).map((t) => (
+              {(["queue", "apps", "traders", "deals", "analytics", "intel"] as Tab[]).map((t) => (
                 <button
                   key={t}
                   onClick={() => setTab(t)}
@@ -75,8 +78,10 @@ function AdminPage() {
 
       <main className="p-6">
         {tab === "queue" && <QueueTab />}
+        {tab === "apps" && <ApplicationsTab />}
         {tab === "traders" && <TradersTab />}
         {tab === "deals" && <DealsTab />}
+        {tab === "analytics" && <AnalyticsTab />}
         {tab === "intel" && <IntelTab />}
       </main>
     </div>
@@ -561,6 +566,219 @@ function Metric({ label, value }: { label: string; value: string }) {
         {label}
       </p>
       <p className="mt-1 text-lg font-bold">{value}</p>
+    </div>
+  );
+}
+
+function ApplicationsTab() {
+  const qc = useQueryClient();
+  const listFn = useServerFn(listApplications);
+  const reviewFn = useServerFn(reviewApplication);
+  const [status, setStatus] = useState<"pending" | "needs_info" | "approved" | "rejected" | "all">("pending");
+  const q = useQuery({
+    queryKey: ["admin-apps", status],
+    queryFn: () => listFn({ data: { status } }),
+  });
+  const [notes, setNotes] = useState<Record<string, string>>({});
+
+  const review = useMutation({
+    mutationFn: (v: { user_id: string; decision: "approved" | "rejected" | "needs_info" | "pending"; admin_notes?: string | null }) =>
+      reviewFn({ data: v }),
+    onSuccess: () => {
+      toast.success("Decision saved");
+      qc.invalidateQueries({ queryKey: ["admin-apps"] });
+      qc.invalidateQueries({ queryKey: ["admin-summary"] });
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
+  });
+
+  return (
+    <div>
+      <div className="mb-3 flex gap-1">
+        {(["pending", "needs_info", "approved", "rejected", "all"] as const).map((s) => (
+          <button
+            key={s}
+            onClick={() => setStatus(s)}
+            className={`rounded px-3 py-1 font-mono text-[10px] uppercase tracking-widest transition ${
+              status === s
+                ? "bg-primary text-primary-foreground"
+                : "bg-surface text-muted-foreground hover:bg-surface-strong"
+            }`}
+          >
+            {s}
+          </button>
+        ))}
+      </div>
+      <div className="space-y-3">
+        {(q.data ?? []).map((a) => (
+          <div key={a.id} className="border border-border bg-surface p-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="font-mono text-[10px] uppercase tracking-widest text-primary">
+                  {a.handle} · {a.account_type ?? "?"} · {a.application_status}
+                </p>
+                <h3 className="mt-1 text-base font-semibold">
+                  {a.legal_name ?? "—"}
+                  {a.company_name ? ` · ${a.company_name}` : ""}
+                </h3>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {[a.city, a.country].filter(Boolean).join(", ") || "—"} ·{" "}
+                  {a.years_active ?? "?"} yrs · {a.contact_email ?? "—"}
+                </p>
+                <p className="mt-2 text-sm">{a.trading_focus ?? "—"}</p>
+                <div className="mt-1 flex flex-wrap gap-3 font-mono text-[11px]">
+                  {a.website_url && (
+                    <a className="text-primary hover:underline" href={a.website_url} target="_blank" rel="noreferrer">
+                      website ↗
+                    </a>
+                  )}
+                  {a.linkedin_url && (
+                    <a className="text-primary hover:underline" href={a.linkedin_url} target="_blank" rel="noreferrer">
+                      linkedin ↗
+                    </a>
+                  )}
+                </div>
+                {a.references_text && (
+                  <p className="mt-2 text-xs text-muted-foreground">refs: {a.references_text}</p>
+                )}
+              </div>
+              <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                applied {a.applied_at ? new Date(a.applied_at).toLocaleDateString() : "—"}
+              </p>
+            </div>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <input
+                placeholder="Broker note (optional)"
+                value={notes[a.id] ?? a.admin_notes ?? ""}
+                onChange={(e) => setNotes({ ...notes, [a.id]: e.target.value })}
+                className="min-w-[240px] flex-1 rounded border border-border bg-background p-2 text-xs"
+              />
+              <button
+                onClick={() =>
+                  review.mutate({ user_id: a.id, decision: "approved", admin_notes: notes[a.id] ?? null })
+                }
+                className="rounded bg-signal-up/20 px-3 py-1 font-mono text-[10px] uppercase tracking-widest text-signal-up hover:bg-signal-up/30"
+              >
+                Approve
+              </button>
+              <button
+                onClick={() =>
+                  review.mutate({ user_id: a.id, decision: "needs_info", admin_notes: notes[a.id] ?? null })
+                }
+                className="rounded bg-signal-warn/20 px-3 py-1 font-mono text-[10px] uppercase tracking-widest text-signal-warn hover:bg-signal-warn/30"
+              >
+                Needs info
+              </button>
+              <button
+                onClick={() =>
+                  review.mutate({ user_id: a.id, decision: "rejected", admin_notes: notes[a.id] ?? null })
+                }
+                className="rounded bg-destructive/20 px-3 py-1 font-mono text-[10px] uppercase tracking-widest text-destructive hover:bg-destructive/30"
+              >
+                Reject
+              </button>
+            </div>
+          </div>
+        ))}
+        {(q.data ?? []).length === 0 && (
+          <p className="font-mono text-xs text-muted-foreground">No applications in this bucket.</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function AnalyticsTab() {
+  const fn = useServerFn(platformStats);
+  const q = useQuery({ queryKey: ["admin-analytics"], queryFn: () => fn() });
+  const d = q.data;
+  const currency = (n: number) =>
+    "$" + n.toLocaleString(undefined, { maximumFractionDigits: 0 });
+  const totalCommission = d?.commission_by_month.reduce((s, m) => s + m.amount, 0) ?? 0;
+
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <KPI label="Listings" value={String(d?.funnel.listings ?? 0)} />
+        <KPI label="Deals closed" value={String(d?.funnel.deals_closed ?? 0)} trend="up" />
+        <KPI label="Match rate" value={
+          d && d.funnel.interests > 0
+            ? Math.round((d.funnel.matched / d.funnel.interests) * 100) + "%"
+            : "0%"
+        } />
+        <KPI label="Commission · 12mo" value={currency(totalCommission)} trend="up" />
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div>
+          <ChartHeader title="Deal pipeline" />
+          <Funnel
+            steps={[
+              { label: "Listings", value: d?.funnel.listings ?? 0 },
+              { label: "Interests", value: d?.funnel.interests ?? 0 },
+              { label: "Matched", value: d?.funnel.matched ?? 0 },
+              { label: "Open deals", value: d?.funnel.deals_open ?? 0 },
+              { label: "Closed", value: d?.funnel.deals_closed ?? 0 },
+            ]}
+          />
+        </div>
+        <div>
+          <ChartHeader title="Commission · last 12 months" />
+          <BarChart
+            data={
+              d?.commission_by_month.map((m) => ({
+                label: m.month.slice(5),
+                value: m.amount,
+              })) ?? []
+            }
+            tone="up"
+          />
+        </div>
+      </div>
+
+      <div>
+        <ChartHeader title="Platform activity · last 30 days" />
+        <AreaChart
+          data={
+            d?.activity_30d.map((x) => ({ label: x.date.slice(5), value: x.count })) ?? []
+          }
+        />
+      </div>
+
+      <div>
+        <ChartHeader title="Top traders · by commission" />
+        <div className="border border-border bg-surface">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Handle</th>
+                <th>Company</th>
+                <th className="num">Deals</th>
+                <th className="num">Commission</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(d?.leaderboard ?? []).map((r, i) => (
+                <tr key={r.user_id}>
+                  <td>{i + 1}</td>
+                  <td className="text-primary">{r.handle}</td>
+                  <td>{r.company_name ?? "—"}</td>
+                  <td className="num">{r.deals}</td>
+                  <td className="num up">{currency(r.commission)}</td>
+                </tr>
+              ))}
+              {(d?.leaderboard ?? []).length === 0 && (
+                <tr>
+                  <td colSpan={5} className="p-6 text-center text-muted-foreground">
+                    No closed deals yet.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }
