@@ -323,3 +323,146 @@ function StatusPill({ status }: { status: string }) {
     </span>
   );
 }
+
+type TeaserData = {
+  status: string;
+  focus_tokens: string[];
+  approved_traders: number;
+  online_now: number;
+  listings_24h: number;
+  active_total: number;
+  by_category: Record<string, number>;
+  volume_usd_est: number;
+  focus_matches: Array<{ id: string; listing_code: string; category: string; title: string; origin_location: string | null; destination_scope: string | null; created_at: string }>;
+  recent: Array<{ id: string; listing_code: string; category: string; title: string; origin_location: string | null; destination_scope: string | null; created_at: string }>;
+};
+
+function TeaserPanel({ data, loading }: { data: TeaserData | undefined; loading: boolean }) {
+  const fmt = (n: number) => n.toLocaleString("en-US");
+  const money = (n: number) =>
+    n >= 1_000_000
+      ? `$${(n / 1_000_000).toFixed(1)}M`
+      : n >= 1_000
+        ? `$${(n / 1_000).toFixed(0)}K`
+        : `$${n}`;
+  return (
+    <div className="mt-4 border border-border bg-surface">
+      <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
+        <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+          Market pulse · read-only preview
+        </p>
+        <span className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground/70">
+          Live
+        </span>
+      </div>
+
+      <div className="grid grid-cols-2 divide-x divide-y divide-border sm:grid-cols-4 sm:divide-y-0">
+        <Kpi label="Approved traders" value={loading ? "—" : fmt(data?.approved_traders ?? 0)} />
+        <Kpi label="Active now (30m)" value={loading ? "—" : fmt(data?.online_now ?? 0)} />
+        <Kpi label="Live listings" value={loading ? "—" : fmt(data?.active_total ?? 0)} />
+        <Kpi label="Volume on book" value={loading ? "—" : money(data?.volume_usd_est ?? 0)} />
+      </div>
+
+      {data && Object.keys(data.by_category).length > 0 && (
+        <div className="border-t border-border px-4 py-3">
+          <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+            By category · last 24h added {fmt(data.listings_24h)}
+          </p>
+          <div className="mt-2 grid grid-cols-2 gap-1 sm:grid-cols-5">
+            {Object.entries(data.by_category).map(([k, v]) => (
+              <div key={k} className="border border-border/60 px-2 py-1.5">
+                <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
+                  {k.replace("_", " ")}
+                </p>
+                <p className="mt-0.5 font-mono text-sm">{fmt(v)}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <OpportunityList
+        title={
+          data?.focus_tokens?.length
+            ? `Matching your focus · ${data.focus_tokens.slice(0, 3).join(" · ")}`
+            : "Matching your focus"
+        }
+        rows={data?.focus_matches ?? []}
+        loading={loading}
+        emptyLabel={
+          data?.focus_tokens?.length
+            ? "No live listings match your focus yet"
+            : "Add a trading focus to see matches"
+        }
+      />
+      <OpportunityList
+        title="Latest opportunities"
+        rows={data?.recent ?? []}
+        loading={loading}
+      />
+
+      <div className="border-t border-border px-4 py-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+        Preview only · counterparty contact unlocks after approval
+      </div>
+    </div>
+  );
+}
+
+function Kpi({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="px-3 py-3">
+      <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
+        {label}
+      </p>
+      <p className="mt-1 font-mono text-lg tabular-nums">{value}</p>
+    </div>
+  );
+}
+
+function OpportunityList({
+  title,
+  rows,
+  loading,
+  emptyLabel = "No listings yet",
+}: {
+  title: string;
+  rows: TeaserData["recent"];
+  loading: boolean;
+  emptyLabel?: string;
+}) {
+  return (
+    <div className="border-t border-border">
+      <div className="px-4 pt-3 pb-1 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+        {title}
+      </div>
+      {loading ? (
+        <div className="px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-muted-foreground/70">
+          Loading…
+        </div>
+      ) : rows.length === 0 ? (
+        <div className="px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-muted-foreground/70">
+          {emptyLabel}
+        </div>
+      ) : (
+        <ul className="divide-y divide-border">
+          {rows.map((r) => (
+            <li key={r.id} className="grid grid-cols-[auto_1fr_auto] items-center gap-3 px-4 py-2">
+              <span className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
+                {r.category.replace("_", " ")}
+              </span>
+              <div className="min-w-0">
+                <p className="truncate text-xs">{r.title}</p>
+                <p className="truncate font-mono text-[10px] text-muted-foreground">
+                  {[r.origin_location, r.destination_scope].filter(Boolean).join(" → ") || "—"}
+                </p>
+              </div>
+              <span className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground/70">
+                {r.listing_code}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
