@@ -42,7 +42,14 @@ function PendingPage() {
   const navigate = useNavigate();
   const statusFn = useServerFn(myStatus);
   const submitFn = useServerFn(submitApplication);
+  const teaserFn = useServerFn(pendingTeaser);
   const q = useQuery({ queryKey: ["me-status"], queryFn: () => statusFn(), refetchInterval: 30_000 });
+  const teaser = useQuery({
+    queryKey: ["pending-teaser"],
+    queryFn: () => teaserFn(),
+    enabled: !!q.data?.profile?.applied_at,
+    refetchInterval: 60_000,
+  });
   const [form, setForm] = useState<FormState>(EMPTY);
   const [busy, setBusy] = useState(false);
 
