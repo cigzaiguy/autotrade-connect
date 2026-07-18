@@ -184,7 +184,7 @@ export const pendingTeaser = createServerFn({ method: "GET" })
         // touched in the last 30 minutes — real activity, no fake heartbeats.
         supabaseAdmin
           .from("interests")
-          .select("interested_user_id", { count: "exact", head: true })
+          .select("trader_id", { count: "exact", head: true })
           .gte("created_at", new Date(Date.now() - 30 * 60_000).toISOString()),
         supabaseAdmin
           .from("listings")
