@@ -285,6 +285,8 @@ function PendingPage() {
               )}
             </div>
           </div>
+
+          {alreadyApplied && <TeaserPanel data={teaser.data} loading={teaser.isLoading} />}
         </aside>
       </main>
     </div>
