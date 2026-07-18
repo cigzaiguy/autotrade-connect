@@ -3,6 +3,32 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireAdmin } from "./admin-middleware";
 
+/**
+ * Accept bare domains ("example.com", "linkedin.com/in/foo") and full URLs.
+ * Normalises to https:// and validates the resulting URL. Empty → null.
+ */
+const looseUrl = z
+  .string()
+  .trim()
+  .max(300)
+  .optional()
+  .nullable()
+  .transform((v) => {
+    if (!v) return null;
+    const s = v.trim();
+    if (!s) return null;
+    const withScheme = /^https?:\/\//i.test(s) ? s : `https://${s}`;
+    try {
+      const u = new URL(withScheme);
+      if (!u.hostname.includes(".")) throw new Error("bad host");
+      return u.toString().replace(/\/$/, "");
+    } catch {
+      throw new z.ZodError([
+        { code: "custom", path: [], message: "Enter a valid website (e.g. example.com)" },
+      ]);
+    }
+  });
+
 const ApplicationInput = z.object({
   account_type: z.enum(["individual", "company"]),
   legal_name: z.string().trim().min(2).max(120),
@@ -11,8 +37,8 @@ const ApplicationInput = z.object({
   city: z.string().trim().max(80).optional().nullable(),
   trading_focus: z.string().trim().min(2).max(400),
   years_active: z.number().int().min(0).max(80).optional().nullable(),
-  website_url: z.string().trim().url().max(300).optional().nullable().or(z.literal("")),
-  linkedin_url: z.string().trim().url().max(300).optional().nullable().or(z.literal("")),
+  website_url: looseUrl,
+  linkedin_url: looseUrl,
   references_text: z.string().trim().max(1000).optional().nullable(),
   contact_email: z.string().trim().email().max(200).optional().nullable(),
 });
