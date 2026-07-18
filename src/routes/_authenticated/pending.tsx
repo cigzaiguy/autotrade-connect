@@ -301,7 +301,15 @@ function PendingPage() {
             </div>
           </div>
 
-          {alreadyApplied && <TeaserPanel data={teaser.data} loading={teaser.isLoading} />}
+          {alreadyApplied && (
+            <TeaserPanel
+              data={teaser.data}
+              loading={teaser.isLoading}
+              filters={filters}
+              onFilters={setFilters}
+            />
+          )}
+
         </aside>
       </main>
     </div>
