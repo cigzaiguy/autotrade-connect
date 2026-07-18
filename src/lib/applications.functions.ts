@@ -145,3 +145,104 @@ export const reviewApplication = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+/** Teaser stats for pending traders — pulls anonymised platform activity so
+ *  they can see the shape of the market while their application is reviewed. */
+export const pendingTeaser = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Their own trading focus, for keyword-matched opportunities.
+    const { data: me } = await supabaseAdmin
+      .from("profiles")
+      .select("trading_focus, application_status")
+      .eq("id", context.userId)
+      .maybeSingle();
+
+    const focus = (me?.trading_focus ?? "").toLowerCase();
+    const focusTokens = Array.from(
+      new Set(
+        focus
+          .split(/[^a-z0-9]+/i)
+          .map((t) => t.trim())
+          .filter((t) => t.length >= 3),
+      ),
+    ).slice(0, 8);
+
+    // Platform-wide anonymised counters.
+    const since = new Date(Date.now() - 15 * 60_000).toISOString();
+    const day = new Date(Date.now() - 24 * 3600_000).toISOString();
+
+    const [approved, onlineNow, listings24h, active, priced, matched, general] =
+      await Promise.all([
+        supabaseAdmin
+          .from("profiles")
+          .select("id", { count: "exact", head: true })
+          .eq("application_status", "approved"),
+        supabaseAdmin
+          .from("profiles")
+          .select("id", { count: "exact", head: true })
+          .gte("updated_at", since),
+        supabaseAdmin
+          .from("listings")
+          .select("id", { count: "exact", head: true })
+          .gte("created_at", day),
+        supabaseAdmin
+          .from("listings")
+          .select("category", { count: "exact" })
+          .in("status", ["active", "brokering"]),
+        supabaseAdmin
+          .from("listings")
+          .select("price_min, price_max, quantity")
+          .in("status", ["active", "brokering"])
+          .limit(500),
+        focusTokens.length
+          ? supabaseAdmin
+              .from("listings")
+              .select("id, listing_code, category, title, origin_location, destination_scope, created_at")
+              .in("status", ["active", "brokering"])
+              .or(
+                focusTokens
+                  .map((t) => `title.ilike.%${t}%,description.ilike.%${t}%`)
+                  .join(","),
+              )
+              .order("created_at", { ascending: false })
+              .limit(6)
+          : Promise.resolve({ data: [] as Array<Record<string, unknown>> }),
+        supabaseAdmin
+          .from("listings")
+          .select("id, listing_code, category, title, origin_location, destination_scope, created_at")
+          .in("status", ["active", "brokering"])
+          .order("created_at", { ascending: false })
+          .limit(6),
+      ]);
+
+    // Approx volume: sum of midpoint * quantity across active priced listings.
+    const volume = (priced.data ?? []).reduce((sum, r) => {
+      const min = Number(r.price_min ?? 0);
+      const max = Number(r.price_max ?? min);
+      const mid = min && max ? (min + max) / 2 : min || max || 0;
+      const q = Number(r.quantity ?? 1) || 1;
+      return sum + mid * q;
+    }, 0);
+
+    const byCategory: Record<string, number> = {};
+    for (const row of active.data ?? []) {
+      const k = String((row as { category: string }).category);
+      byCategory[k] = (byCategory[k] ?? 0) + 1;
+    }
+
+    return {
+      status: me?.application_status ?? "pending",
+      focus_tokens: focusTokens,
+      approved_traders: approved.count ?? 0,
+      online_now: onlineNow.count ?? 0,
+      listings_24h: listings24h.count ?? 0,
+      active_total: active.count ?? 0,
+      by_category: byCategory,
+      volume_usd_est: Math.round(volume),
+      focus_matches: matched.data ?? [],
+      recent: general.data ?? [],
+    };
+  });
