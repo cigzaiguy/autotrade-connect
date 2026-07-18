@@ -584,19 +584,25 @@ function TeaserPanel({
   );
 }
 
-  );
-}
-
-function Kpi({ label, value }: { label: string; value: string }) {
+function Kpi({ label, value, help }: { label: string; value: string; help?: string }) {
   return (
-    <div className="px-3 py-3">
-      <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
-        {label}
+    <div className="px-3 py-3" title={help}>
+      <p className="flex items-center gap-1 font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
+        <span>{label}</span>
+        {help && (
+          <span
+            aria-label={help}
+            className="inline-flex size-3 items-center justify-center rounded-full border border-border/70 text-[8px] text-muted-foreground/70"
+          >
+            ?
+          </span>
+        )}
       </p>
       <p className="mt-1 font-mono text-lg tabular-nums">{value}</p>
     </div>
   );
 }
+
 
 function OpportunityList({
   title,
