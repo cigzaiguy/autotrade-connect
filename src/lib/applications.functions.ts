@@ -172,7 +172,6 @@ export const pendingTeaser = createServerFn({ method: "GET" })
 
     // Platform-wide anonymised counters.
     const day = new Date(Date.now() - 24 * 3600_000).toISOString();
-    void day;
 
     const [approved, onlineNow, listings24h, active, priced, matched, general] =
       await Promise.all([
