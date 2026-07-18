@@ -164,6 +164,55 @@ function Dashboard() {
   );
 }
 
+function StatsStrip() {
+  const fn = useServerFn(traderStats);
+  const { data } = useQuery({ queryKey: ["trader-stats"], queryFn: () => fn() });
+  const k = data?.kpis;
+  const currency = (n: number) =>
+    "$" + n.toLocaleString(undefined, { maximumFractionDigits: 0 });
+  return (
+    <div className="mx-auto max-w-[1400px] px-6 pt-6">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <KPI label="Active listings" value={String(k?.active_listings ?? 0)} hint="Yours, live" trend="flat" />
+        <KPI label="Open interests" value={String(k?.open_interests ?? 0)} hint="Bids in flight" trend="up" />
+        <KPI label="Deals closed" value={String(k?.deals_closed ?? 0)} hint="All-time" trend="up" />
+        <KPI
+          label="Commission · MTD"
+          value={currency(k?.commission_paid_mtd ?? 0)}
+          hint="This month"
+          trend={k && k.commission_paid_mtd > 0 ? "up" : "flat"}
+        />
+      </div>
+      <div className="mt-3 grid gap-3 lg:grid-cols-2">
+        <div>
+          <ChartHeader title="Deal activity · last 30 days" />
+          <AreaChart
+            data={
+              data?.activity_30d.map((d) => ({
+                label: d.date.slice(5),
+                value: d.count,
+              })) ?? []
+            }
+            tone="primary"
+          />
+        </div>
+        <div>
+          <ChartHeader title="Commission by month · last 6" />
+          <BarChart
+            data={
+              data?.commission_by_month.map((d) => ({
+                label: d.month.slice(5),
+                value: d.amount,
+              })) ?? []
+            }
+            tone="up"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Ticker() {
   const items = [
     "WCI 2,148 ▲ 1.2%",
