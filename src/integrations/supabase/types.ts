@@ -85,6 +85,7 @@ export type Database = {
           source_name: string
           source_url: string
           tag: Database["public"]["Enums"]["intel_tag"]
+          value: number | null
         }
         Insert: {
           ai_summary?: string | null
@@ -100,6 +101,7 @@ export type Database = {
           source_name: string
           source_url: string
           tag: Database["public"]["Enums"]["intel_tag"]
+          value?: number | null
         }
         Update: {
           ai_summary?: string | null
@@ -115,6 +117,7 @@ export type Database = {
           source_name?: string
           source_url?: string
           tag?: Database["public"]["Enums"]["intel_tag"]
+          value?: number | null
         }
         Relationships: [
           {
@@ -265,28 +268,67 @@ export type Database = {
       }
       profiles: {
         Row: {
+          account_type: Database["public"]["Enums"]["account_type"] | null
+          admin_notes: string | null
+          application_status: Database["public"]["Enums"]["application_status"]
+          applied_at: string | null
+          city: string | null
           company_name: string | null
           contact_email: string | null
           country: string | null
           created_at: string
           handle: string
           id: string
+          legal_name: string | null
+          linkedin_url: string | null
+          references_text: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          trading_focus: string | null
+          website_url: string | null
+          years_active: number | null
         }
         Insert: {
+          account_type?: Database["public"]["Enums"]["account_type"] | null
+          admin_notes?: string | null
+          application_status?: Database["public"]["Enums"]["application_status"]
+          applied_at?: string | null
+          city?: string | null
           company_name?: string | null
           contact_email?: string | null
           country?: string | null
           created_at?: string
           handle: string
           id: string
+          legal_name?: string | null
+          linkedin_url?: string | null
+          references_text?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          trading_focus?: string | null
+          website_url?: string | null
+          years_active?: number | null
         }
         Update: {
+          account_type?: Database["public"]["Enums"]["account_type"] | null
+          admin_notes?: string | null
+          application_status?: Database["public"]["Enums"]["application_status"]
+          applied_at?: string | null
+          city?: string | null
           company_name?: string | null
           contact_email?: string | null
           country?: string | null
           created_at?: string
           handle?: string
           id?: string
+          legal_name?: string | null
+          linkedin_url?: string | null
+          references_text?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          trading_focus?: string | null
+          website_url?: string | null
+          years_active?: number | null
         }
         Relationships: []
       }
@@ -358,7 +400,9 @@ export type Database = {
       }
     }
     Enums: {
+      account_type: "individual" | "company"
       app_role: "admin" | "trader"
+      application_status: "pending" | "approved" | "rejected" | "needs_info"
       deal_status: "open" | "closed" | "cancelled"
       fee_status: "paid" | "due" | "overdue" | "trial"
       intel_tag: "news" | "oem" | "freight" | "oil" | "chips"
@@ -497,7 +541,9 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      account_type: ["individual", "company"],
       app_role: ["admin", "trader"],
+      application_status: ["pending", "approved", "rejected", "needs_info"],
       deal_status: ["open", "closed", "cancelled"],
       fee_status: ["paid", "due", "overdue", "trial"],
       intel_tag: ["news", "oem", "freight", "oil", "chips"],
