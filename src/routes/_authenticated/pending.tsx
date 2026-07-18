@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { myStatus, submitApplication } from "@/lib/applications.functions";
+import { myStatus, submitApplication, pendingTeaser } from "@/lib/applications.functions";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/pending")({
