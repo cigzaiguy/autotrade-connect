@@ -26,12 +26,13 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
     applyTheme(next);
   };
 
+  const nextLabel = theme === "dark" ? "Ivory" : "Onyx";
   return (
     <button
       type="button"
       onClick={toggle}
-      aria-label={`Switch to ${theme === "dark" ? "Refinitiv Ivory" : "Bloomberg Dark"} theme`}
-      title={theme === "dark" ? "Ivory · light terminal" : "Bloomberg · dark terminal"}
+      aria-label={`Switch to ${nextLabel === "Ivory" ? "Ivory light terminal" : "Onyx dark terminal"}`}
+      title={theme === "dark" ? "Switch to Ivory (light)" : "Switch to Onyx (dark)"}
       className={
         "inline-flex items-center gap-2 border border-border bg-surface px-3 py-1.5 " +
         "font-mono text-[10px] uppercase tracking-widest text-foreground " +
@@ -39,7 +40,7 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
       }
     >
       {theme === "dark" ? <Sun className="size-3.5" /> : <Moon className="size-3.5" />}
-      <span>{theme === "dark" ? "Ivory" : "Bloomberg"}</span>
+      <span>{theme === "dark" ? "Ivory" : "Onyx"}</span>
     </button>
   );
 }

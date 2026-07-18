@@ -6,8 +6,8 @@
 
 /*
  * AutoIntel — dual terminal themes.
- * :root = Refinitiv Ivory (warm paper, navy ink, oxblood accents).
- * .dark = Bloomberg Classic (black canvas, amber primary, phosphor greens/reds).
+ * :root = Ivory (warm paper, navy ink, oxblood accents).
+ * .dark = Onyx (black canvas, amber primary, phosphor greens/reds).
  */
 
 @theme inline {
@@ -92,7 +92,7 @@
   --ring: oklch(0.22 0.05 265 / 0.5);
 }
 
-/* Bloomberg Classic — black canvas, amber primary */
+/* Onyx — black canvas, amber primary */
 .dark {
   --background: oklch(0.13 0.005 80);          /* near-black #0B0B0A */
   --foreground: oklch(0.94 0.02 85);           /* warm bone */
