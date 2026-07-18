@@ -235,38 +235,49 @@ function PendingPage() {
           </form>
         </section>
 
-        <aside className="space-y-3">
-          <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-primary">
-            What unlocks on approval
-          </p>
-          {[
-            {
-              title: "Deal Room",
-              body: "List units anonymously. AutoIntel brokers every match — counterparties stay hidden until we've filtered them.",
-            },
-            {
-              title: "Live Intel",
-              body: "Freight indexes, oil, chip supply, OEM news and port congestion pulled in continuously.",
-            },
-            {
-              title: "Personal Deal Book",
-              body: "Track your listings, bids, matches, commission paid and performance over time.",
-            },
-            {
-              title: "Broker services",
-              body: "One-tap intro to vetted shippers, insurers and storage — commission shared, no direct spam.",
-            },
-          ].map((m) => (
-            <div key={m.title} className="relative overflow-hidden border border-border bg-surface p-4">
-              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,color-mix(in_oklab,var(--color-primary)_18%,transparent),transparent_60%)]" />
-              <div className="relative">
-                <p className="font-mono text-[10px] uppercase tracking-widest text-primary">
-                  🔒 {m.title}
-                </p>
-                <p className="mt-1 text-sm text-foreground">{m.body}</p>
-              </div>
+        <aside>
+          <div className="border border-border bg-surface">
+            <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
+              <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+                What unlocks on approval
+              </p>
+              <StatusPill status={status} />
             </div>
-          ))}
+            <ol className="divide-y divide-border">
+              {[
+                { n: "01", title: "Deal Room", body: "Anonymous listings, brokered matches" },
+                { n: "02", title: "Live Intel", body: "Freight · oil · chips · OEM · ports" },
+                { n: "03", title: "Deal Book", body: "Personal P&L, win-rate, commissions" },
+                { n: "04", title: "Broker Services", body: "Vetted shippers, insurers, storage" },
+              ].map((m) => (
+                <li
+                  key={m.n}
+                  className="grid grid-cols-[2.5rem_1fr_auto] items-center gap-3 px-4 py-2.5"
+                >
+                  <span className="font-mono text-[10px] tracking-widest text-muted-foreground">
+                    {m.n}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-foreground">
+                      {m.title}
+                    </p>
+                    <p className="mt-0.5 truncate text-xs text-muted-foreground">{m.body}</p>
+                  </div>
+                  <span className="border border-border/70 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-widest text-muted-foreground/70">
+                    Locked
+                  </span>
+                </li>
+              ))}
+            </ol>
+            <div className="flex items-center justify-between gap-3 border-t border-border px-4 py-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+              <span>SLA · 1–3 business days after intro call</span>
+              {(status === "needs_info" || status === "rejected") && (
+                <a href="mailto:broker@autointel.app" className="text-primary hover:underline">
+                  Contact broker
+                </a>
+              )}
+            </div>
+          </div>
         </aside>
       </main>
     </div>
@@ -285,5 +296,21 @@ function Field({ label, children, required, full }: { label: string; children: R
       </span>
       {children}
     </label>
+  );
+}
+
+function StatusPill({ status }: { status: string }) {
+  const label =
+    status === "approved"
+      ? "Approved"
+      : status === "rejected"
+        ? "Declined"
+        : status === "needs_info"
+          ? "Needs info"
+          : "Pending review";
+  return (
+    <span className="border border-primary/40 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.2em] text-primary">
+      {label}
+    </span>
   );
 }
