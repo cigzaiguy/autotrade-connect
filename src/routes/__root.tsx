@@ -123,10 +123,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   errorComponent: ErrorComponent,
 });
 
+const THEME_INIT = `try{var t=localStorage.getItem('ai-theme');if(t==='dark')document.documentElement.classList.add('dark');}catch(e){}`;
+
 function RootShell({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
         <HeadContent />
       </head>
       <body>
@@ -157,6 +160,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
+      <ThemeToggle className="fixed bottom-4 right-4 z-[100] shadow-paper" />
       <Toaster />
     </QueryClientProvider>
   );
