@@ -1,81 +1,59 @@
-## What you'll get
+# Refinitiv Ivory Terminal — Visual Rework
 
-**1. Admin console** at `/admin` — no login required when you open it on `localhost`. On the live site (`*.lovable.app` or any custom domain) it still requires a signed-in admin account, so the URL isn't a backdoor for anyone who guesses it.
+Retheme the app to a light, print-terminal look inspired by Refinitiv / FT / Bloomberg's ivory mode. Structural code, routes, and data stay the same — only the design system and presentational shells change.
 
-**2. Live intel layer** — Firecrawl + Lovable AI pull real automotive news, freight indexes, oil, and chip supply into the ticker and a new `/intel` page.
+## Design tokens (src/styles.css)
 
----
+Replace the current dark OKLCH palette with a light ivory system. All values expressed as tokens so shadcn utilities inherit them.
 
-## Admin console (`/admin`)
+- `--background` = `#F5F1E8` (warm ivory paper)
+- `--surface` = `#EEE8D8` (card paper)
+- `--surface-strong` = `#E8E2D3` (raised surface / table stripe)
+- `--hairline` / `--border` = `#0F1B3D` @ 12% (fine navy rule)
+- `--foreground` = `#0F1B3D` (deep navy text)
+- `--muted-foreground` = `#0F1B3D` @ 60%
+- `--primary` = `#0F1B3D` (navy — used for headers, key CTAs, active nav)
+- `--primary-foreground` = `#F5F1E8`
+- `--accent` = `#8B1A1A` (oxblood — reserved for alerts, deltas-down, "LIVE" tags, admin warnings)
+- `--signal-up` = `#0F5132` (forest green)
+- `--signal-down` = `#8B1A1A`
+- `--signal-warn` = `#8A6A00` (dark amber)
+- Kill `shadow-glow` / cyan neon. Replace with `--shadow-paper` (crisp 1px navy hairline + tiny 2px offset shadow).
+- Remove the `.scanline` utility (CRT effect doesn't belong on paper).
 
-Three tabs, all fed by admin-only server functions:
+## Typography
 
-**Broker queue**
-- Every listing with `brokering` or `active` status, expanded to show each interested trader's real handle, company, email, bid, quantity, message.
-- Buttons per interest: `Shortlist`, `Reject`, `Mark as matched` (creates a deal row and flips the listing to `brokered`).
-- Filter by category, sort by newest / most interest.
+- Load Space Mono (400/700) + Rubik (400/500/600/700) via `<link>` in `src/routes/__root.tsx` (drop Inter + JetBrains Mono links).
+- `--font-mono` = `"Space Mono"` — used for headlines, tickers, listing codes, metric numerals, section eyebrows.
+- `--font-sans` = `"Rubik"` — body copy, form inputs, table cell text.
+- Set base body size to `15px` with `line-height: 1.55` for the executive density; headings tightened with `tracking-tight`.
 
-**Trader directory**
-- Every trader with real name, company, country, email, join date, # listings, # interests, yearly-fee status (`paid` / `due` / `overdue`), suspend toggle.
-- Search by handle / company / email.
+## Executive density rules
 
-**Deal ledger & commissions**
-- One row per brokered deal: listing code, seller handle, buyer handle, agreed price, commission % (editable, default 2.5%), commission amount (auto), fee status, closed date.
-- Totals bar: gross deal volume, commission earned this month / YTD.
-- CSV export.
+- Card padding steps up from `p-4` → `p-6`; section gutters `gap-6`.
+- Table rows min-height `44px`, zebra using `--surface-strong` at 50%.
+- Numerals get `font-variant-numeric: tabular-nums` globally on `.font-mono`.
+- Eyebrows: uppercase Space Mono, `text-[11px]`, `tracking-[0.22em]`, navy @ 70%.
+- Buttons: square-ish `rounded-sm`, navy fill / ivory text for primary; ghost = navy 1px border on ivory.
 
----
+## Component pass (presentational only)
 
-## Live intel layer
+Files touched, no logic changes:
 
-**New tables** for cached feed items so the ticker isn't re-scraping on every page load.
+1. **src/styles.css** — full token swap above, remove scanline & marquee glow, add `.paper-rule` (1px navy hairline), `.ticker-tape` (ivory bg, navy text, oxblood deltas).
+2. **src/routes/__root.tsx** — swap font `<link>` tags; update `<meta name="theme-color">` to ivory; remove `className="dark"` on `<html>` (switch to light color-scheme).
+3. **src/routes/index.tsx** (landing) — hero on ivory with navy headline in Space Mono, oxblood eyebrow "LIVE TERMINAL · EST. 2026", module cards become bordered paper tiles with navy rule + mono tag chips.
+4. **src/routes/auth.tsx** — terminal login reframed as a "credentials slip": ivory card, navy border, mono field labels, oxblood error state.
+5. **src/routes/_authenticated/dashboard.tsx** — Deal Room: ticker becomes ivory tape with navy text and oxblood/green deltas; category filter chips become navy outline pills; listing rows become dense table with mono listing codes and Rubik descriptions; status pills recolored (Listed=navy outline, Interest=amber, Matching=oxblood, Closed=green).
+6. **src/routes/_authenticated/intel.tsx** — feed styled like an FT column: Space Mono headline, Rubik lede, oxblood "Impact" rule on the left.
+7. **src/routes/_authenticated/admin.tsx** (+ queue/traders/deals subroutes) — admin chrome: oxblood "SYSTEM · ADMIN" banner instead of cyan warning, navy sidebar, CSV export button as ghost navy.
 
-**One scheduled server route** `/api/public/intel/refresh` hits Firecrawl for:
-- Automotive news (Automotive News, Reuters autos, Just Auto).
-- OEM press rooms (Toyota, VW, Stellantis, BYD, Ford, GM — configurable list).
-- Freight indexes (Drewry WCI, Baltic Dry, SCFI summary pages).
-- Oil (Brent / WTI spot summary).
-- Chip supply headlines (SIA, TrendForce).
+## Out of scope
 
-Each scraped batch is summarised by Lovable AI (`google/gemini-3.5-flash`) into a 1-line headline + 2-sentence impact note, tagged `news | oem | freight | oil | chips`, and written to `intel_items`.
+- No changes to server functions, RLS, Firecrawl pipeline, routes, or data shapes.
+- No new features. Purely a visual/theme replacement.
 
-**Where it shows**
-- Dashboard ticker: latest 20 items across all tags.
-- New `/intel` page: filterable feed with source link, timestamp, tag, AI impact summary.
-- Admin tab gets a **Run refresh now** button + last-run status.
+## Verification
 
----
-
-## Security note on localhost auto-admin
-
-Anyone running the app locally (you, a dev, anyone who clones a copy) gets admin with no login. That's fine for you as the sole operator right now, but the moment you invite anyone to the codebase or run it on a shared machine, they're admin too. I'll add a big red banner in the admin UI when it's in localhost-bypass mode so it's obvious. When you're ready, flipping one flag switches it to "must be signed in as admin everywhere".
-
----
-
-## Technical details
-
-**Auth gate** — new `requireAdmin` server-function middleware:
-- If `process.env.NODE_ENV !== 'production'` AND request host is `localhost`/`127.0.0.1` → allow, synthesize a system admin context.
-- Otherwise → run `requireSupabaseAuth`, then check `has_role(userId, 'admin')`; 403 if not.
-- `/admin` route uses the same check client-side to render or redirect.
-
-**New tables (migration)**
-- `deals` — listing_id, seller_id, buyer_id, agreed_price, currency, commission_pct, commission_amount, status (`open|closed|cancelled`), closed_at.
-- `trader_billing` — user_id, yearly_fee_status, fee_due_at, last_paid_at, suspended.
-- `intel_items` — source_url, source_name, tag, headline, ai_summary, published_at, fetched_at, raw jsonb.
-- `intel_sources` — name, url, tag, enabled, last_run_at, last_status. Seeded with the source list above.
-
-Each with GRANTs + RLS: traders read nothing, admins read all via `has_role`. Service role writes intel from the scheduled route.
-
-**New server functions** (`src/lib/admin.functions.ts`, all `.middleware([requireAdmin])`): `listBrokerQueue`, `updateInterestStatus`, `matchDeal`, `listTraders`, `setTraderBilling`, `suspendTrader`, `listDeals`, `updateDealCommission`, `exportDealsCsv`, `runIntelRefresh`.
-
-**Public server functions** for the app: `listIntelItems({ tag?, limit })` — reads via server publishable client + narrow anon SELECT policy on `intel_items` only.
-
-**Firecrawl** — connect via `standard_connectors--connect` (I'll trigger the flow); scrapes run server-side in `/api/public/intel/refresh` behind a shared-secret header. Summaries via Lovable AI Gateway.
-
-**New routes**
-- `src/routes/_authenticated/admin.tsx` + tab subroutes `admin.queue.tsx`, `admin.traders.tsx`, `admin.deals.tsx`, `admin.intel.tsx`.
-- `src/routes/_authenticated/intel.tsx` — trader-facing feed.
-- `src/routes/api/public/intel/refresh.ts` — cron-safe refresh endpoint.
-
-**Design** — reuses the tactical-terminal tokens; admin gets a red accent stripe + `SYSTEM` badge so it's visually distinct from trader views.
+- `bun run build` clean.
+- Spot-check landing, /auth, /dashboard, /intel, /admin via Playwright screenshots at 1280×1800 to confirm the ivory/navy/oxblood system reads as a professional terminal and nothing regressed layout-wise.
