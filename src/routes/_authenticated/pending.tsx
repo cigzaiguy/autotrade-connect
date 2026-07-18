@@ -298,3 +298,19 @@ function Field({ label, children, required, full }: { label: string; children: R
     </label>
   );
 }
+
+function StatusPill({ status }: { status: string }) {
+  const label =
+    status === "approved"
+      ? "Approved"
+      : status === "rejected"
+        ? "Declined"
+        : status === "needs_info"
+          ? "Needs info"
+          : "Pending review";
+  return (
+    <span className="border border-primary/40 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.2em] text-primary">
+      {label}
+    </span>
+  );
+}
