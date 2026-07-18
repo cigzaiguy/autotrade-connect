@@ -171,8 +171,8 @@ export const pendingTeaser = createServerFn({ method: "GET" })
     ).slice(0, 8);
 
     // Platform-wide anonymised counters.
-    const since = new Date(Date.now() - 15 * 60_000).toISOString();
     const day = new Date(Date.now() - 24 * 3600_000).toISOString();
+    void day;
 
     const [approved, onlineNow, listings24h, active, priced, matched, general] =
       await Promise.all([
