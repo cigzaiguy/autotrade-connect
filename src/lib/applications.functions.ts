@@ -47,8 +47,11 @@ export const submitApplication = createServerFn({ method: "POST" })
 export const myStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    // Private identity columns are not granted to `authenticated`; read own
+    // profile via service role, strictly scoped to the caller's own id.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const [{ data: profile }, { data: isAdmin }] = await Promise.all([
-      context.supabase
+      supabaseAdmin
         .from("profiles")
         .select(
           "id, handle, account_type, legal_name, company_name, country, city, trading_focus, years_active, website_url, linkedin_url, references_text, contact_email, application_status, applied_at, admin_notes",

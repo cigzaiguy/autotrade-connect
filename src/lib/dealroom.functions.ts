@@ -121,6 +121,9 @@ export const submitInterest = createServerFn({ method: "POST" })
 export const myLedger = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    // Private identity columns (company_name, contact_email) aren't granted
+    // to `authenticated`; fetch own profile via service role, scoped to self.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const [{ data: myListings }, { data: myInterests }, { data: profile }] =
       await Promise.all([
         context.supabase
@@ -135,7 +138,7 @@ export const myLedger = createServerFn({ method: "GET" })
           .eq("trader_id", context.userId)
           .order("created_at", { ascending: false })
           .limit(20),
-        context.supabase
+        supabaseAdmin
           .from("profiles")
           .select("handle, company_name, contact_email")
           .eq("id", context.userId)
