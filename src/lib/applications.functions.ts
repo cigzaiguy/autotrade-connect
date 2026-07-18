@@ -211,7 +211,7 @@ export const pendingTeaser = createServerFn({ method: "GET" })
               )
               .order("created_at", { ascending: false })
               .limit(6)
-          : Promise.resolve({ data: [] as Array<Record<string, unknown>> }),
+          : Promise.resolve({ data: [] as Array<{ id: string; listing_code: string; category: string; title: string; origin_location: string | null; destination_scope: string | null; created_at: string }> }),
         supabaseAdmin
           .from("listings")
           .select("id, listing_code, category, title, origin_location, destination_scope, created_at")
