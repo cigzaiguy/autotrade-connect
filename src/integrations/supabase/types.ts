@@ -388,7 +388,36 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      trader_public: {
+        Row: {
+          account_type: Database["public"]["Enums"]["account_type"] | null
+          country: string | null
+          created_at: string | null
+          handle: string | null
+          id: string | null
+          trading_focus: string | null
+          years_active: number | null
+        }
+        Insert: {
+          account_type?: Database["public"]["Enums"]["account_type"] | null
+          country?: string | null
+          created_at?: string | null
+          handle?: string | null
+          id?: string | null
+          trading_focus?: string | null
+          years_active?: number | null
+        }
+        Update: {
+          account_type?: Database["public"]["Enums"]["account_type"] | null
+          country?: string | null
+          created_at?: string | null
+          handle?: string | null
+          id?: string | null
+          trading_focus?: string | null
+          years_active?: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {
