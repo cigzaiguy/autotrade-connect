@@ -147,11 +147,32 @@ export const reviewApplication = createServerFn({ method: "POST" })
   });
 
 /** Teaser stats for pending traders — pulls anonymised platform activity so
- *  they can see the shape of the market while their application is reviewed. */
+ *  they can see the shape of the market while their application is reviewed.
+ *  Supports drill-down filters: category, scope (origin/destination text), and
+ *  a time window in hours applied to listings.created_at. */
+const TeaserInput = z
+  .object({
+    category: z
+      .enum(["vehicles", "spare_parts", "storage", "chips", "manufacturing"])
+      .optional()
+      .nullable(),
+    scope: z.string().trim().max(80).optional().nullable(),
+    hours: z.number().int().min(1).max(24 * 30).optional().nullable(),
+  })
+  .optional()
+  .nullable()
+  .transform((v) => v ?? {});
+
 export const pendingTeaser = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((raw: unknown) => TeaserInput.parse(raw))
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const category = data.category ?? null;
+    const scope = (data.scope ?? "").trim();
+    const hours = data.hours ?? 168; // default: 7 days
+    const windowStart = new Date(Date.now() - hours * 3600_000).toISOString();
 
     // Their own trading focus, for keyword-matched opportunities.
     const { data: me } = await supabaseAdmin
@@ -170,51 +191,70 @@ export const pendingTeaser = createServerFn({ method: "GET" })
       ),
     ).slice(0, 8);
 
-    // Platform-wide anonymised counters.
-    const day = new Date(Date.now() - 24 * 3600_000).toISOString();
+    // Helper: apply the shared filter set to a listings query builder.
+    const applyFilters = <T extends { eq: (c: string, v: string) => T; or: (s: string) => T; gte: (c: string, v: string) => T }>(
+      qb: T,
+      opts: { timeWindow?: boolean } = {},
+    ): T => {
+      let out = qb;
+      if (category) out = out.eq("category", category);
+      if (scope) {
+        const esc = scope.replace(/[,()]/g, " ");
+        out = out.or(`origin_location.ilike.%${esc}%,destination_scope.ilike.%${esc}%`);
+      }
+      if (opts.timeWindow) out = out.gte("created_at", windowStart);
+      return out;
+    };
 
-    const [approved, onlineNow, listings24h, active, priced, matched, general] =
+    const [approved, onlineNow, listingsWindow, active, priced, matched, general] =
       await Promise.all([
         supabaseAdmin
           .from("profiles")
           .select("id", { count: "exact", head: true })
           .eq("application_status", "approved"),
-        // "Online now" proxy: distinct owners of listings or interests
-        // touched in the last 30 minutes — real activity, no fake heartbeats.
+        // "Active now" proxy: distinct interest submissions in the last 30 minutes.
         supabaseAdmin
           .from("interests")
           .select("trader_id", { count: "exact", head: true })
           .gte("created_at", new Date(Date.now() - 30 * 60_000).toISOString()),
-        supabaseAdmin
-          .from("listings")
-          .select("id", { count: "exact", head: true })
-          .gte("created_at", day),
-        supabaseAdmin
-          .from("listings")
-          .select("category", { count: "exact" })
-          .in("status", ["active", "brokering"]),
-        supabaseAdmin
-          .from("listings")
-          .select("price_min, price_max, quantity")
-          .in("status", ["active", "brokering"])
-          .limit(500),
+        applyFilters(
+          supabaseAdmin.from("listings").select("id", { count: "exact", head: true }),
+          { timeWindow: true },
+        ),
+        applyFilters(
+          supabaseAdmin
+            .from("listings")
+            .select("category", { count: "exact" })
+            .in("status", ["active", "brokering"]),
+        ),
+        applyFilters(
+          supabaseAdmin
+            .from("listings")
+            .select("price_min, price_max, quantity")
+            .in("status", ["active", "brokering"])
+            .limit(500),
+        ),
         focusTokens.length
-          ? supabaseAdmin
-              .from("listings")
-              .select("id, listing_code, category, title, origin_location, destination_scope, created_at")
-              .in("status", ["active", "brokering"])
-              .or(
-                focusTokens
-                  .map((t) => `title.ilike.%${t}%,description.ilike.%${t}%`)
-                  .join(","),
-              )
+          ? applyFilters(
+              supabaseAdmin
+                .from("listings")
+                .select("id, listing_code, category, title, origin_location, destination_scope, created_at")
+                .in("status", ["active", "brokering"])
+                .or(
+                  focusTokens
+                    .map((t) => `title.ilike.%${t}%,description.ilike.%${t}%`)
+                    .join(","),
+                ),
+            )
               .order("created_at", { ascending: false })
               .limit(6)
           : Promise.resolve({ data: [] as Array<{ id: string; listing_code: string; category: string; title: string; origin_location: string | null; destination_scope: string | null; created_at: string }> }),
-        supabaseAdmin
-          .from("listings")
-          .select("id, listing_code, category, title, origin_location, destination_scope, created_at")
-          .in("status", ["active", "brokering"])
+        applyFilters(
+          supabaseAdmin
+            .from("listings")
+            .select("id, listing_code, category, title, origin_location, destination_scope, created_at")
+            .in("status", ["active", "brokering"]),
+        )
           .order("created_at", { ascending: false })
           .limit(6),
       ]);
@@ -237,9 +277,10 @@ export const pendingTeaser = createServerFn({ method: "GET" })
     return {
       status: me?.application_status ?? "pending",
       focus_tokens: focusTokens,
+      filters: { category, scope, hours },
       approved_traders: approved.count ?? 0,
       online_now: onlineNow.count ?? 0,
-      listings_24h: listings24h.count ?? 0,
+      listings_window: listingsWindow.count ?? 0,
       active_total: active.count ?? 0,
       by_category: byCategory,
       volume_usd_est: Math.round(volume),
@@ -247,3 +288,4 @@ export const pendingTeaser = createServerFn({ method: "GET" })
       recent: general.data ?? [],
     };
   });
+
