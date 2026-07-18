@@ -38,18 +38,33 @@ const EMPTY: FormState = {
   contact_email: "",
 };
 
+type TeaserFilters = {
+  category: "" | "vehicles" | "spare_parts" | "storage" | "chips" | "manufacturing";
+  scope: string;
+  hours: 1 | 24 | 168 | 720;
+};
+
 function PendingPage() {
   const navigate = useNavigate();
   const statusFn = useServerFn(myStatus);
   const submitFn = useServerFn(submitApplication);
   const teaserFn = useServerFn(pendingTeaser);
   const q = useQuery({ queryKey: ["me-status"], queryFn: () => statusFn(), refetchInterval: 30_000 });
+  const [filters, setFilters] = useState<TeaserFilters>({ category: "", scope: "", hours: 168 });
   const teaser = useQuery({
-    queryKey: ["pending-teaser"],
-    queryFn: () => teaserFn(),
+    queryKey: ["pending-teaser", filters],
+    queryFn: () =>
+      teaserFn({
+        data: {
+          category: filters.category || null,
+          scope: filters.scope || null,
+          hours: filters.hours,
+        },
+      }),
     enabled: !!q.data?.profile?.applied_at,
     refetchInterval: 60_000,
   });
+
   const [form, setForm] = useState<FormState>(EMPTY);
   const [busy, setBusy] = useState(false);
 
