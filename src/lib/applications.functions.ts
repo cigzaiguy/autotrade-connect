@@ -180,10 +180,12 @@ export const pendingTeaser = createServerFn({ method: "GET" })
           .from("profiles")
           .select("id", { count: "exact", head: true })
           .eq("application_status", "approved"),
+        // "Online now" proxy: distinct owners of listings or interests
+        // touched in the last 30 minutes — real activity, no fake heartbeats.
         supabaseAdmin
-          .from("profiles")
-          .select("id", { count: "exact", head: true })
-          .gte("updated_at", since),
+          .from("interests")
+          .select("interested_user_id", { count: "exact", head: true })
+          .gte("created_at", new Date(Date.now() - 30 * 60_000).toISOString()),
         supabaseAdmin
           .from("listings")
           .select("id", { count: "exact", head: true })
