@@ -350,9 +350,10 @@ function StatusPill({ status }: { status: string }) {
 type TeaserData = {
   status: string;
   focus_tokens: string[];
+  filters: { category: string | null; scope: string; hours: number };
   approved_traders: number;
   online_now: number;
-  listings_24h: number;
+  listings_window: number;
   active_total: number;
   by_category: Record<string, number>;
   volume_usd_est: number;
@@ -360,7 +361,46 @@ type TeaserData = {
   recent: Array<{ id: string; listing_code: string; category: string; title: string; origin_location: string | null; destination_scope: string | null; created_at: string }>;
 };
 
-function TeaserPanel({ data, loading }: { data: TeaserData | undefined; loading: boolean }) {
+const CATEGORY_OPTIONS: { value: TeaserFilters["category"]; label: string }[] = [
+  { value: "", label: "All" },
+  { value: "vehicles", label: "Vehicles" },
+  { value: "spare_parts", label: "Spare parts" },
+  { value: "storage", label: "Storage" },
+  { value: "chips", label: "Chips" },
+  { value: "manufacturing", label: "Manufacturing" },
+];
+
+const WINDOW_OPTIONS: { value: TeaserFilters["hours"]; label: string }[] = [
+  { value: 1, label: "1h" },
+  { value: 24, label: "24h" },
+  { value: 168, label: "7d" },
+  { value: 720, label: "30d" },
+];
+
+const METRIC_HELP: Record<string, string> = {
+  approved_traders:
+    "Total traders vetted and approved on the platform. Not affected by filters.",
+  online_now:
+    "Distinct traders who submitted interest on any listing in the last 30 minutes. Not affected by filters.",
+  active_total:
+    "Live listings currently open for interest (status: active or brokering), matching your filters.",
+  volume_usd_est:
+    "Approximate on-book value = sum of (midpoint price × quantity) across live listings matching your filters. Estimate only.",
+  listings_window:
+    "New listings created within the selected time window, matching your filters.",
+};
+
+function TeaserPanel({
+  data,
+  loading,
+  filters,
+  onFilters,
+}: {
+  data: TeaserData | undefined;
+  loading: boolean;
+  filters: TeaserFilters;
+  onFilters: (f: TeaserFilters) => void;
+}) {
   const fmt = (n: number) => n.toLocaleString("en-US");
   const money = (n: number) =>
     n >= 1_000_000
@@ -368,6 +408,9 @@ function TeaserPanel({ data, loading }: { data: TeaserData | undefined; loading:
       : n >= 1_000
         ? `$${(n / 1_000).toFixed(0)}K`
         : `$${n}`;
+  const windowLabel =
+    WINDOW_OPTIONS.find((o) => o.value === filters.hours)?.label ?? "7d";
+  const filtered = !!filters.category || !!filters.scope.trim();
   return (
     <div className="mt-4 border border-border bg-surface">
       <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
@@ -375,31 +418,135 @@ function TeaserPanel({ data, loading }: { data: TeaserData | undefined; loading:
           Market pulse · read-only preview
         </p>
         <span className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground/70">
-          Live
+          {loading ? "Loading…" : "Live"}
         </span>
       </div>
 
+      {/* Drill-down filter row */}
+      <div className="grid gap-2 border-b border-border px-4 py-3 sm:grid-cols-[1fr_1fr_auto]">
+        <label className="block">
+          <span className="mb-1 block font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
+            Category
+          </span>
+          <select
+            value={filters.category}
+            onChange={(e) =>
+              onFilters({ ...filters, category: e.target.value as TeaserFilters["category"] })
+            }
+            className="w-full rounded border border-border bg-background p-1.5 font-mono text-[11px] outline-none focus:border-primary"
+          >
+            {CATEGORY_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block">
+          <span className="mb-1 block font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
+            Location scope
+          </span>
+          <input
+            value={filters.scope}
+            onChange={(e) => onFilters({ ...filters, scope: e.target.value })}
+            placeholder="Jebel Ali, West Africa, …"
+            className="w-full rounded border border-border bg-background p-1.5 font-mono text-[11px] outline-none focus:border-primary"
+          />
+        </label>
+        <div className="block">
+          <span className="mb-1 block font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
+            Window
+          </span>
+          <div className="flex overflow-hidden rounded border border-border">
+            {WINDOW_OPTIONS.map((o) => (
+              <button
+                type="button"
+                key={o.value}
+                onClick={() => onFilters({ ...filters, hours: o.value })}
+                className={`flex-1 px-2 py-1.5 font-mono text-[10px] uppercase tracking-widest transition ${
+                  filters.hours === o.value
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-background text-muted-foreground hover:bg-surface-strong"
+                }`}
+              >
+                {o.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        {filtered && (
+          <button
+            type="button"
+            onClick={() => onFilters({ category: "", scope: "", hours: filters.hours })}
+            className="justify-self-start font-mono text-[10px] uppercase tracking-widest text-primary hover:underline sm:col-span-3"
+          >
+            Clear filters
+          </button>
+        )}
+      </div>
+
       <div className="grid grid-cols-2 divide-x divide-y divide-border sm:grid-cols-4 sm:divide-y-0">
-        <Kpi label="Approved traders" value={loading ? "—" : fmt(data?.approved_traders ?? 0)} />
-        <Kpi label="Active now (30m)" value={loading ? "—" : fmt(data?.online_now ?? 0)} />
-        <Kpi label="Live listings" value={loading ? "—" : fmt(data?.active_total ?? 0)} />
-        <Kpi label="Volume on book" value={loading ? "—" : money(data?.volume_usd_est ?? 0)} />
+        <Kpi
+          label="Approved traders"
+          value={loading ? "—" : fmt(data?.approved_traders ?? 0)}
+          help={METRIC_HELP.approved_traders}
+        />
+        <Kpi
+          label="Active now · 30m"
+          value={loading ? "—" : fmt(data?.online_now ?? 0)}
+          help={METRIC_HELP.online_now}
+        />
+        <Kpi
+          label={filtered ? "Live listings · filtered" : "Live listings"}
+          value={loading ? "—" : fmt(data?.active_total ?? 0)}
+          help={METRIC_HELP.active_total}
+        />
+        <Kpi
+          label={filtered ? "Volume on book · filtered" : "Volume on book"}
+          value={loading ? "—" : money(data?.volume_usd_est ?? 0)}
+          help={METRIC_HELP.volume_usd_est}
+        />
       </div>
 
       {data && Object.keys(data.by_category).length > 0 && (
         <div className="border-t border-border px-4 py-3">
-          <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-            By category · last 24h added {fmt(data.listings_24h)}
-          </p>
+          <div className="flex items-center justify-between gap-3">
+            <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+              By category
+            </p>
+            <p
+              className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground"
+              title={METRIC_HELP.listings_window}
+            >
+              New in {windowLabel} · {fmt(data.listings_window)}
+            </p>
+          </div>
           <div className="mt-2 grid grid-cols-2 gap-1 sm:grid-cols-5">
-            {Object.entries(data.by_category).map(([k, v]) => (
-              <div key={k} className="border border-border/60 px-2 py-1.5">
-                <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
-                  {k.replace("_", " ")}
-                </p>
-                <p className="mt-0.5 font-mono text-sm">{fmt(v)}</p>
-              </div>
-            ))}
+            {Object.entries(data.by_category).map(([k, v]) => {
+              const active = filters.category === k;
+              return (
+                <button
+                  key={k}
+                  type="button"
+                  onClick={() =>
+                    onFilters({
+                      ...filters,
+                      category: active ? "" : (k as TeaserFilters["category"]),
+                    })
+                  }
+                  className={`border px-2 py-1.5 text-left transition ${
+                    active
+                      ? "border-primary bg-primary/10"
+                      : "border-border/60 hover:bg-surface-strong"
+                  }`}
+                >
+                  <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
+                    {k.replace("_", " ")}
+                  </p>
+                  <p className="mt-0.5 font-mono text-sm">{fmt(v)}</p>
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
@@ -414,20 +561,29 @@ function TeaserPanel({ data, loading }: { data: TeaserData | undefined; loading:
         loading={loading}
         emptyLabel={
           data?.focus_tokens?.length
-            ? "No live listings match your focus yet"
+            ? "No live listings match your focus in this view"
             : "Add a trading focus to see matches"
         }
       />
       <OpportunityList
-        title="Latest opportunities"
+        title={filtered ? "Latest · filtered view" : "Latest opportunities"}
         rows={data?.recent ?? []}
         loading={loading}
       />
 
-      <div className="border-t border-border px-4 py-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-        Preview only · counterparty contact unlocks after approval
+      <div className="space-y-1 border-t border-border px-4 py-2.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+        <p>How to read this</p>
+        <ul className="space-y-0.5 normal-case tracking-normal text-[10px] text-muted-foreground/80">
+          <li>· KPIs marked "filtered" update with the filters above.</li>
+          <li>· Approved traders and Active-now are platform totals — filters don't apply.</li>
+          <li>· Volume on book is an estimate from midpoint price × quantity.</li>
+          <li>· Counterparty contact unlocks after approval.</li>
+        </ul>
       </div>
     </div>
+  );
+}
+
   );
 }
 
