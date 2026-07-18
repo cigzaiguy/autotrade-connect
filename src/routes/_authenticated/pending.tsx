@@ -206,10 +206,10 @@ function PendingPage() {
                 <input value={form.contact_email} onChange={(e) => setForm({ ...form, contact_email: e.target.value })} placeholder="For the intro call" className={input} />
               </Field>
               <Field label="Website" full={!isCompany}>
-                <input type="url" value={form.website_url} onChange={(e) => setForm({ ...form, website_url: e.target.value })} placeholder="https://" className={input} />
+                <input value={form.website_url} onChange={(e) => setForm({ ...form, website_url: e.target.value })} placeholder="example.com" className={input} />
               </Field>
-              <Field label="LinkedIn">
-                <input type="url" value={form.linkedin_url} onChange={(e) => setForm({ ...form, linkedin_url: e.target.value })} placeholder="https://linkedin.com/in/…" className={input} />
+              <Field label="LinkedIn (optional)">
+                <input value={form.linkedin_url} onChange={(e) => setForm({ ...form, linkedin_url: e.target.value })} placeholder="linkedin.com/in/…" className={input} />
               </Field>
               <Field label="Trading focus" full required>
                 <textarea
