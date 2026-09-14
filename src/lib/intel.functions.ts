@@ -26,7 +26,7 @@ export const listIntelItems = createServerFn({ method: "GET" })
     z
       .object({
         tag: z.enum(["news", "oem", "freight", "oil", "chips"]).optional(),
-        limit: z.number().int().positive().max(200).default(50),
+        limit: z.number().int().positive().max(500).default(50),
       })
       .parse(raw ?? {}),
   )
