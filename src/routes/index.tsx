@@ -38,6 +38,13 @@ function Landing() {
           >
             Modules
           </a>
+          <Link
+            to="/intel"
+            className="hidden text-sm font-medium text-muted-foreground hover:text-foreground md:inline"
+          >
+            Intel
+          </Link>
+
           {signedIn ? (
             <Link
               to="/dashboard"
